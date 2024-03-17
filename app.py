@@ -6,6 +6,7 @@ from flask_moment import Moment
 from flask_wtf import FlaskForm
 from wtforms import StringField, SubmitField
 from wtforms.fields.choices import SelectField
+from wtforms.fields.simple import PasswordField
 from wtforms.validators import DataRequired
 
 app = Flask(__name__)
@@ -20,6 +21,12 @@ class NameForm(FlaskForm):
     lastname = StringField('Informe o seu sobrenome:', validators=[DataRequired()])
     college = StringField('Informe a sua Instituição de ensino:', validators=[DataRequired()])
     discipline = SelectField('Informe a sua disciplina:', choices=[('DSWA5'), ('DWBA4'), ('Gestão de projetos')])
+    submit = SubmitField('Submit')
+
+
+class LoginForm(FlaskForm):
+    username = StringField('Usuário:', validators=[DataRequired()], render_kw={"placeholder": "Username ou e-mail"})
+    password = PasswordField('Senha:', validators=[DataRequired()], render_kw={"placeholder": "Informe a sua senha"})
     submit = SubmitField('Submit')
 
 
@@ -55,4 +62,26 @@ def index():
                            discipline=session.get('discipline'),
                            userIp=session.get('userIp'),
                            appHost=session.get('appHost'),
+                           current_time=datetime.utcnow())
+
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    form = LoginForm()
+    if form.validate_on_submit():
+        session['username'] = form.username.data
+        session['password'] = form.password.data
+        return redirect(url_for('loginResponse'))
+    return render_template('login.html',
+                           form=form,
+                           username=session.get('username'),
+                           password=session.get('password'),
+                           current_time=datetime.utcnow())
+
+
+@app.route('/loginResponse', methods=['GET', 'POST'])
+def loginResponse():
+    return render_template('loginResponse.html',
+                           username=session.get('username'),
+                           password=session.get('password'),
                            current_time=datetime.utcnow())
